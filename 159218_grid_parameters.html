@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>159218 招商中证卫星产业ETF - 网格参数设计报告</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        background: #0c0e19;
+        color: #e1e4ed;
+        line-height: 1.6;
+        overflow-x: hidden;
+    }
+
+    .bg-glow {
+        position: fixed;
+        top: -300px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 800px;
+        height: 800px;
+        background: radial-gradient(circle, rgba(46, 121, 255, 0.08) 0%, transparent 70%);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 24px;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Hero Section */
+    .hero {
+        text-align: center;
+        padding: 48px 0 36px;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        margin-bottom: 40px;
+    }
+
+    .hero .badge {
+        display: inline-block;
+        background: linear-gradient(135deg, rgba(46,121,255,0.2), rgba(0,200,117,0.2));
+        color: #5ce5a0;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 4px 14px;
+        border-radius: 20px;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+        border: 1px solid rgba(92,229,160,0.15);
+    }
+
+    .hero h1 {
+        font-size: 36px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        background: linear-gradient(135deg, #fff 30%, #7a9cff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 8px;
+    }
+
+    .hero .subtitle {
+        color: #7a859e;
+        font-size: 15px;
+        font-weight: 400;
+    }
+
+    .hero .price-tag {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+        gap: 28px;
+    }
+
+    .hero .price-item {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 12px;
+        padding: 12px 24px;
+        text-align: center;
+    }
+
+    .hero .price-item .label {
+        color: #7a859e;
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .hero .price-item .value {
+        font-size: 24px;
+        font-weight: 700;
+        margin-top: 4px;
+    }
+
+    .hero .price-item .value.up { color: #f23645; }
+    .hero .price-item .value.neutral { color: #e1e4ed; }
+
+    /* Section Headers */
+    .section {
+        margin-bottom: 36px;
+    }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 18px;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .section-title .icon {
+        display: inline-flex;
+        width: 28px;
+        height: 28px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+
+    .section-title .icon.blue { background: rgba(46,121,255,0.15); }
+    .section-title .icon.green { background: rgba(0,200,117,0.15); }
+    .section-title .icon.purple { background: rgba(139,92,246,0.15); }
+    .section-title .icon.orange { background: rgba(255,159,67,0.15); }
+    .section-title .icon.red { background: rgba(242,54,69,0.15); }
+
+    /* Info Cards */
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .info-card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 10px;
+        padding: 16px;
+    }
+
+    .info-card .label {
+        color: #7a859e;
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .info-card .value {
+        font-size: 20px;
+        font-weight: 700;
+        margin-top: 4px;
+        color: #fff;
+    }
+
+    .info-card .value .unit {
+        font-size: 13px;
+        font-weight: 400;
+        color: #7a859e;
+        margin-left: 4px;
+    }
+
+    /* Tables */
+    .table-wrap {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+
+    thead th {
+        background: rgba(255,255,255,0.04);
+        color: #7a859e;
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 12px 16px;
+        text-align: center;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    tbody td {
+        padding: 10px 16px;
+        text-align: center;
+        border-bottom: 1px solid rgba(255,255,255,0.03);
+        font-weight: 500;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+    .buy { color: #5ce5a0; }
+    .sell { color: #f23645; }
+    .neutral { color: #e1e4ed; }
+
+    .total-row td {
+        background: rgba(46,121,255,0.06);
+        font-weight: 700;
+    }
+
+    /* Parameter Cards */
+    .param-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 12px;
+    }
+
+    .param-card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 10px;
+        padding: 18px;
+    }
+
+    .param-card .hdr {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .param-card .hdr .emoji { font-size: 16px; }
+
+    .param-card .hdr .name {
+        font-weight: 600;
+        font-size: 14px;
+        color: #c8cde0;
+    }
+
+    .param-card .val {
+        font-size: 28px;
+        font-weight: 800;
+        color: #fff;
+    }
+
+    .param-card .desc {
+        font-size: 13px;
+        color: #7a859e;
+        margin-top: 4px;
+    }
+
+    /* Risk Section */
+    .risk-list {
+        list-style: none;
+    }
+
+    .risk-list li {
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        font-size: 14px;
+    }
+
+    .risk-list li:last-child { border-bottom: none; }
+    .risk-list .mark { color: #ff9f43; }
+    .risk-list .mark.green { color: #5ce5a0; }
+    .risk-list .mark.red { color: #f23645; }
+
+    /* Data Table */
+    .data-table-wrap {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .data-table-wrap::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .data-table-wrap::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .data-table-wrap::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.1);
+        border-radius: 2px;
+    }
+
+    .trades-table td.v-high { color: #5ce5a0; font-weight: 600; }
+
+    .up-arrow { color: #f23645; }
+    .down-arrow { color: #5ce5a0; }
+
+    .footer {
+        text-align: center;
+        padding: 24px 0;
+        color: #4a5470;
+        font-size: 13px;
+        border-top: 1px solid rgba(255,255,255,0.05);
+        margin-top: 40px;
+    }
+
+    .footer strong { color: #7a859e; }
+
+    @media (max-width: 600px) {
+        .container { padding: 24px 16px; }
+        .hero h1 { font-size: 26px; }
+        .hero .price-tag { flex-wrap: wrap; gap: 12px; }
+        .info-grid { grid-template-columns: 1fr 1fr; }
+        .param-grid { grid-template-columns: 1fr; }
+    }
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+<div class="container">
+
+<!-- Hero -->
+<div class="hero">
+    <div class="badge">🚀 东方财富妙想Skills · MX网格参数</div>
+    <h1>159218 网格参数设计</h1>
+    <p class="subtitle">招商中证卫星产业ETF · 基于东方财富权威数据的网格策略设计 · 每日交易2-3次</p>
+    <div class="price-tag">
+        <div class="price-item">
+            <div class="label">最新收盘价</div>
+            <div class="value neutral">1.686 <span class="unit">元</span></div>
+        </div>
+        <div class="price-item">
+            <div class="label">近1月日均波幅</div>
+            <div class="value">0.065 <span class="unit">元 (3.80%)</span></div>
+        </div>
+        <div class="price-item">
+            <div class="label">今日涨跌</div>
+            <div class="value up">+1.20%</div>
+        </div>
+    </div>
+</div>
+
+<!-- Fund Info -->
+<div class="section">
+    <div class="section-title"><span class="icon blue">ℹ</span> 基金基本信息</div>
+    <div class="info-grid">
+        <div class="info-card"><div class="label">基金全称</div><div class="value" style="font-size:15px;">招商中证卫星产业ETF</div></div>
+        <div class="info-card"><div class="label">管理公司</div><div class="value" style="font-size:15px;">招商基金管理有限公司</div></div>
+        <div class="info-card"><div class="label">成立日期</div><div class="value">2025-05-14</div></div>
+        <div class="info-card"><div class="label">成立以来收益</div><div class="value" style="color:#5ce5a0;">+68.58%</div></div>
+        <div class="info-card"><div class="label">基金经理</div><div class="value" style="font-size:15px;">许荣漫</div></div>
+        <div class="info-card"><div class="label">跟踪指数</div><div class="value" style="font-size:15px;">中证卫星产业(931594)</div></div>
+        <div class="info-card"><div class="label">基金规模</div><div class="value">39.65 亿</div></div>
+        <div class="info-card"><div class="label">日均成交额</div><div class="value">2.28 亿</div></div>
+    </div>
+</div>
+
+<!-- Volatility Analysis -->
+<div class="section">
+    <div class="section-title"><span class="icon purple">📊</span> 波动率分析（近14个交易日）</div>
+    <div class="info-grid">
+        <div class="info-card"><div class="label">日均波幅（绝对值）</div><div class="value">0.065 <span class="unit">元</span></div></div>
+        <div class="info-card"><div class="label">日均波幅（百分比）</div><div class="value">3.80 <span class="unit">%</span></div></div>
+        <div class="info-card"><div class="label">最大日波幅</div><div class="value">0.125 <span class="unit">元 (7.31%)</span></div></div>
+        <div class="info-card"><div class="label">最小日波幅</div><div class="value">0.027 <span class="unit">元 (1.63%)</span></div></div>
+    </div>
+
+    <div class="table-wrap" style="margin-top:12px;">
+        <div class="data-table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>日期</th><th>开盘</th><th>收盘</th><th>最高</th><th>最低</th><th>波幅(元)</th><th>波幅(%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>06-18</td><td>1.651</td><td>1.686</td><td>1.703</td><td>1.644</td><td>0.059</td><td>3.53%</td></tr>
+                <tr><td>06-17</td><td>1.632</td><td>1.666</td><td>1.685</td><td>1.628</td><td>0.057</td><td>3.44%</td></tr>
+                <tr><td>06-16</td><td>1.659</td><td>1.647</td><td>1.668</td><td>1.636</td><td>0.032</td><td>1.94%</td></tr>
+                <tr><td>06-15</td><td>1.628</td><td>1.641</td><td>1.643</td><td>1.599</td><td>0.044</td><td>2.72%</td></tr>
+                <tr><td>06-12</td><td>1.642</td><td>1.622</td><td>1.672</td><td>1.616</td><td>0.056</td><td>3.41%</td></tr>
+                <tr><td>06-11</td><td>1.600</td><td>1.610</td><td>1.625</td><td>1.578</td><td>0.047</td><td>2.94%</td></tr>
+                <tr><td>06-10</td><td>1.660</td><td>1.626</td><td>1.691</td><td>1.610</td><td>0.081</td><td>4.91%</td></tr>
+                <tr><td>06-09</td><td>1.646</td><td>1.678</td><td>1.681</td><td>1.615</td><td>0.066</td><td>4.00%</td></tr>
+                <tr><td>06-08</td><td>1.651</td><td>1.640</td><td>1.703</td><td>1.625</td><td>0.078</td><td>4.69%</td></tr>
+                <tr><td>06-05</td><td>1.671</td><td>1.701</td><td>1.716</td><td>1.645</td><td>0.071</td><td>4.22%</td></tr>
+                <tr><td>06-04</td><td>1.650</td><td>1.656</td><td>1.674</td><td>1.640</td><td>0.034</td><td>2.05%</td></tr>
+                <tr><td>06-03</td><td>1.630</td><td>1.669</td><td>1.706</td><td>1.624</td><td>0.082</td><td>4.92%</td></tr>
+                <tr><td>06-02</td><td>1.626</td><td>1.631</td><td>1.639</td><td>1.568</td><td>0.071</td><td>4.43%</td></tr>
+                <tr><td>06-01</td><td>1.647</td><td>1.624</td><td>1.669</td><td>1.624</td><td>0.045</td><td>2.73%</td></tr>
+            </tbody>
+        </table>
+        </div>
+    </div>
+</div>
+
+<!-- Grid Parameters -->
+<div class="section">
+    <div class="section-title"><span class="icon green">🎯</span> 网格核心参数</div>
+    <div class="param-grid">
+        <div class="param-card">
+            <div class="hdr"><span class="emoji">📏</span><span class="name">网格间距</span></div>
+            <div class="val">0.026 <span style="font-size:16px;font-weight:400;color:#7a859e;">元</span></div>
+            <div class="desc">约占基准价的 1.55%，日均波幅 0.065 / 目标交易 2.5 次</div>
+        </div>
+        <div class="param-card">
+            <div class="hdr"><span class="emoji">📐</span><span class="name">网格层数</span></div>
+            <div class="val">5+5 <span style="font-size:16px;font-weight:400;color:#7a859e;">层</span></div>
+            <div class="desc">基准价上方5层卖出，下方5层买入</div>
+        </div>
+        <div class="param-card">
+            <div class="hdr"><span class="emoji">🎯</span><span class="name">目标日交易次数</span></div>
+            <div class="val">2 ~ 3 <span style="font-size:16px;font-weight:400;color:#7a859e;">次/日</span></div>
+            <div class="desc">按日均波幅 3.80%，每格 1.55% 计算</div>
+        </div>
+        <div class="param-card">
+            <div class="hdr"><span class="emoji">💵</span><span class="name">每格交易金额</span></div>
+            <div class="val">5,000 ~ 8,000 <span style="font-size:16px;font-weight:400;color:#7a859e;">元</span></div>
+            <div class="desc">按总资金10万元，每格约 5-8% 仓位</div>
+        </div>
+    </div>
+</div>
+
+<!-- Price Grid Table -->
+<div class="section">
+    <div class="section-title"><span class="icon orange">📋</span> 价格网格详表（基准价: 1.686 元）</div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>层级</th><th>价格</th><th>方向</th><th>较基准涨跌幅</th><th>累计涨跌幅</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>↑ 5</td><td class="sell">1.816</td><td class="sell">卖出</td><td>+1.55%</td><td>+7.73%</td></tr>
+                <tr><td>↑ 4</td><td class="sell">1.790</td><td class="sell">卖出</td><td>+1.55%</td><td>+6.17%</td></tr>
+                <tr><td>↑ 3</td><td class="sell">1.764</td><td class="sell">卖出</td><td>+1.55%</td><td>+4.63%</td></tr>
+                <tr><td>↑ 2</td><td class="sell">1.738</td><td class="sell">卖出</td><td>+1.55%</td><td>+3.08%</td></tr>
+                <tr><td>↑ 1</td><td class="sell">1.712</td><td class="sell">卖出</td><td>+1.55%</td><td>+1.54%</td></tr>
+                <tr style="background:rgba(46,121,255,0.06);border-top:2px solid rgba(46,121,255,0.2);border-bottom:2px solid rgba(46,121,255,0.2);">
+                    <td style="font-weight:800;">基准</td><td style="font-weight:800;color:#fff;">1.686</td><td>—</td><td>—</td><td>—</td>
+                </tr>
+                <tr><td>↓ 1</td><td class="buy">1.660</td><td class="buy">买入</td><td>-1.54%</td><td>-1.54%</td></tr>
+                <tr><td>↓ 2</td><td class="buy">1.634</td><td class="buy">买入</td><td>-1.55%</td><td>-3.08%</td></tr>
+                <tr><td>↓ 3</td><td class="buy">1.608</td><td class="buy">买入</td><td>-1.55%</td><td>-4.63%</td></tr>
+                <tr><td>↓ 4</td><td class="buy">1.582</td><td class="buy">买入</td><td>-1.55%</td><td>-6.17%</td></tr>
+                <tr><td>↓ 5</td><td class="buy">1.556</td><td class="buy">买入</td><td>-1.55%</td><td>-7.71%</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Position Sizing -->
+<div class="section">
+    <div class="section-title"><span class="icon green">💼</span> 仓位管理（假设总资金 100,000 元）</div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>项目</th><th>金额</th><th>份额</th><th>比例</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>初始底仓</td><td>50,000 元</td><td>~29,600 份</td><td>50%</td></tr>
+                <tr><td>每格交易量</td><td>5,000 ~ 8,000 元</td><td>~3,000 ~ 4,700 份</td><td>5~8%</td></tr>
+                <tr><td>最大持仓（满仓10层）</td><td>~90,000 元</td><td>~55,000 份</td><td>~90%</td></tr>
+                <tr><td>现金底仓</td><td>~10,000 元</td><td>—</td><td>~10%</td></tr>
+                <tr class="total-row"><td>建仓初始资金分配</td><td>50,000 底仓 + 50,000 现金</td><td>—</td><td>50% + 50%</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Risk Control -->
+<div class="section">
+    <div class="section-title"><span class="icon red">🛡</span> 风控规则</div>
+    <ul class="risk-list">
+        <li><span class="mark">⚠</span> <strong>价格上限突破：</strong>若价格突破上5层（1.816元），暂停所有买入，仅执行卖出</li>
+        <li><span class="mark">⚠</span> <strong>价格下限突破：</strong>若价格跌破下5层（1.556元），暂停所有卖出，仅执行买入</li>
+        <li><span class="mark red">⛔</span> <strong>止损阈值：</strong>价格跌破近30日均线 -2% 时，触发止损暂停网格</li>
+        <li><span class="mark green">✓</span> <strong>流动性条件：</strong>日均成交额2.28亿，流动性极好，无需额外滑点控制</li>
+        <li><span class="mark green">✓</span> <strong>ETF优势：</strong>免印花税，交易成本低，适合高频网格</li>
+        <li><span class="mark">📌</span> <strong>监控频率：</strong>建议每5分钟扫描一次价格，触发条件即执行</li>
+        <li><span class="mark">📌</span> <strong>暂停条件：</strong>若价格单日涨跌幅超过±5%，建议暂停当日网格交易</li>
+    </ul>
+</div>
+
+<!-- Market Context -->
+<div class="section">
+    <div class="section-title"><span class="icon blue">📰</span> 近期市场背景（妙想资讯搜索）</div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>日期</th><th>事件</th><th>影响</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>2026-06-18</td><td>主力资金净流入2,705万元，居全市场第一梯队</td><td class="buy">偏多</td></tr>
+                <tr><td>2026-06-18</td><td>已连续5日资金净赎回，区间净流出1.08亿元</td><td class="sell">偏空</td></tr>
+                <tr><td>2026-06-19</td><td>净值上涨1.25%，近1年收益66.30%</td><td class="neutral">中性偏多</td></tr>
+                <tr><td>2026-06</td><td>近1月回报 -8.52%，短期回调明显</td><td class="sell">偏空回调</td></tr>
+                <tr><td>2026-05</td><td>重仓股卫星产业链（航天电子/中国卫星/中国卫通）</td><td class="neutral">行业聚焦</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <p style="margin-top:10px;font-size:13px;color:#7a859e;">数据来源：东方财富妙想Skills mx-search / mx-data</p>
+</div>
+
+<div class="footer">
+    <p>📊 数据来源：<strong>东方财富妙想Skills</strong>（mx-data + mx-search）</p>
+    <p>⚠️ 本报告仅作为网格参数设计参考，不构成投资建议。投资有风险，入市需谨慎。</p>
+    <p style="margin-top:6px;">报告生成时间：2026-06-20</p>
+</div>
+
+</div>
+</body>
+</html>
