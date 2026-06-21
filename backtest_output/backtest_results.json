@@ -1,0 +1,262 @@
+{
+  "generated": "2026-06-21 02:03",
+  "recommendations": {
+    "003019": 5.0,
+    "513300": 4.6,
+    "161005": 5.0,
+    "159566": 4.4,
+    "159851": 3.8
+  },
+  "details": {
+    "003019": {
+      "name": "宸展光电",
+      "daily_vol": 4.34,
+      "avg_intra": 6.23,
+      "best_threshold": 5.0,
+      "best_trades": 1,
+      "best_return": -31.75,
+      "top5": [
+        {
+          "thr": 5.0,
+          "trades": 1,
+          "return": -31.75,
+          "deviation": -1.15,
+          "win_rate": 77.0,
+          "score": 36.2
+        },
+        {
+          "thr": 4.9,
+          "trades": 1,
+          "return": -31.75,
+          "deviation": -1.15,
+          "win_rate": 76.5,
+          "score": 36.0
+        },
+        {
+          "thr": 4.8,
+          "trades": 1,
+          "return": -31.75,
+          "deviation": -1.15,
+          "win_rate": 76.0,
+          "score": 35.7
+        },
+        {
+          "thr": 4.7,
+          "trades": 1,
+          "return": -31.75,
+          "deviation": -1.15,
+          "win_rate": 75.5,
+          "score": 35.5
+        },
+        {
+          "thr": 4.6,
+          "trades": 1,
+          "return": -31.75,
+          "deviation": -1.15,
+          "win_rate": 75.0,
+          "score": 35.2
+        }
+      ]
+    },
+    "513300": {
+      "name": "纳斯达克100ETF",
+      "daily_vol": 1.95,
+      "avg_intra": 1.62,
+      "best_threshold": 4.6,
+      "best_trades": 8,
+      "best_return": 17.96,
+      "top5": [
+        {
+          "thr": 4.6,
+          "trades": 8,
+          "return": 17.96,
+          "deviation": 1.82,
+          "win_rate": 60.3,
+          "score": 110.4
+        },
+        {
+          "thr": 4.7,
+          "trades": 6,
+          "return": 17.71,
+          "deviation": 1.82,
+          "win_rate": 61.2,
+          "score": 110.1
+        },
+        {
+          "thr": 4.5,
+          "trades": 8,
+          "return": 17.96,
+          "deviation": 1.82,
+          "win_rate": 59.5,
+          "score": 110.0
+        },
+        {
+          "thr": 4.4,
+          "trades": 8,
+          "return": 17.96,
+          "deviation": 1.82,
+          "win_rate": 58.5,
+          "score": 109.5
+        },
+        {
+          "thr": 4.3,
+          "trades": 8,
+          "return": 17.96,
+          "deviation": 1.82,
+          "win_rate": 57.6,
+          "score": 109.0
+        }
+      ]
+    },
+    "161005": {
+      "name": "富国天惠LOF",
+      "daily_vol": 1.09,
+      "avg_intra": 1.47,
+      "best_threshold": 5.0,
+      "best_trades": 2,
+      "best_return": 2.13,
+      "top5": [
+        {
+          "thr": 5.0,
+          "trades": 2,
+          "return": 2.13,
+          "deviation": 1.89,
+          "win_rate": 62.2,
+          "score": 33.7
+        },
+        {
+          "thr": 4.9,
+          "trades": 2,
+          "return": 2.13,
+          "deviation": 1.89,
+          "win_rate": 61.5,
+          "score": 33.4
+        },
+        {
+          "thr": 4.8,
+          "trades": 2,
+          "return": 2.13,
+          "deviation": 1.89,
+          "win_rate": 60.7,
+          "score": 33.0
+        },
+        {
+          "thr": 4.7,
+          "trades": 2,
+          "return": 2.13,
+          "deviation": 1.89,
+          "win_rate": 59.8,
+          "score": 32.5
+        },
+        {
+          "thr": 4.6,
+          "trades": 2,
+          "return": 2.13,
+          "deviation": 1.89,
+          "win_rate": 59.0,
+          "score": 32.1
+        }
+      ]
+    },
+    "159566": {
+      "name": "新能源电池ETF",
+      "daily_vol": 2.29,
+      "avg_intra": 2.94,
+      "best_threshold": 4.4,
+      "best_trades": 7,
+      "best_return": -2.76,
+      "top5": [
+        {
+          "thr": 4.4,
+          "trades": 7,
+          "return": -2.76,
+          "deviation": 0.85,
+          "win_rate": 80.7,
+          "score": 68.6
+        },
+        {
+          "thr": 4.3,
+          "trades": 7,
+          "return": -2.71,
+          "deviation": 0.85,
+          "win_rate": 80.3,
+          "score": 68.5
+        },
+        {
+          "thr": 4.2,
+          "trades": 7,
+          "return": -2.71,
+          "deviation": 0.85,
+          "win_rate": 79.8,
+          "score": 68.2
+        },
+        {
+          "thr": 4.1,
+          "trades": 7,
+          "return": -2.71,
+          "deviation": 0.85,
+          "win_rate": 79.3,
+          "score": 68.0
+        },
+        {
+          "thr": 4.0,
+          "trades": 7,
+          "return": -2.71,
+          "deviation": 0.85,
+          "win_rate": 78.8,
+          "score": 67.7
+        }
+      ]
+    },
+    "159851": {
+      "name": "金融科技ETF",
+      "daily_vol": 1.99,
+      "avg_intra": 2.99,
+      "best_threshold": 3.8,
+      "best_trades": 7,
+      "best_return": -13.9,
+      "top5": [
+        {
+          "thr": 3.8,
+          "trades": 7,
+          "return": -13.9,
+          "deviation": -1.11,
+          "win_rate": 70.8,
+          "score": 63.2
+        },
+        {
+          "thr": 3.7,
+          "trades": 8,
+          "return": -14.02,
+          "deviation": -1.11,
+          "win_rate": 70.0,
+          "score": 62.8
+        },
+        {
+          "thr": 3.6,
+          "trades": 10,
+          "return": -13.9,
+          "deviation": -1.11,
+          "win_rate": 69.2,
+          "score": 62.4
+        },
+        {
+          "thr": 3.5,
+          "trades": 10,
+          "return": -13.9,
+          "deviation": -1.11,
+          "win_rate": 68.3,
+          "score": 61.9
+        },
+        {
+          "thr": 3.4,
+          "trades": 11,
+          "return": -14.02,
+          "deviation": -1.11,
+          "win_rate": 67.4,
+          "score": 61.5
+        }
+      ]
+    }
+  }
+}
