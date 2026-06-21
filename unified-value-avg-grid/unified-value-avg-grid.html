@@ -521,31 +521,37 @@
   <p>日内固定网格间距取<mark class="key">平均日内振幅 × 60%</mark>，覆盖日内常规波动区间。每层股数 = 目标持仓 / 3（取整到100股）。</p>
 
   <!-- Daily workflow -->
-  <h2>每日操作流程</h2>
+  <h2>每日操作流程（10:00触发）</h2>
   <div class="card-grid">
     <div class="card">
       <div class="label">09:25 - 09:30</div>
       <div style="font-weight:700;margin-bottom:0.3rem;">开盘前检查</div>
       <div class="muted">确认华宝条件单状态，检查隔夜/周末跳空</div>
     </div>
+    <div class="card" style="border-color:var(--accent);border-width:2px;">
+      <div class="label">10:00 — 自动触发</div>
+      <div style="font-weight:700;margin-bottom:0.3rem;">市值平衡计算</div>
+      <div class="muted">
+        <code>python3 value_avg_10am.py</code><br>
+        自动获取实时价格 → 计算偏离 → 输出买卖指令<br>
+        脚本由定时任务自动执行，结果保存到日志
+      </div>
+    </div>
+    <div class="card">
+      <div class="label">10:00 - 10:15</div>
+      <div style="font-weight:700;margin-bottom:0.3rem;">查看结果 & 下单</div>
+      <div class="muted">查看自动生成的报告，如有调整指令则提交华宝委托</div>
+    </div>
     <div class="card">
       <div class="label">09:30 - 15:00</div>
       <div style="font-weight:700;margin-bottom:0.3rem;">日内网格自动交易</div>
       <div class="muted">华宝固定网格条件单自动执行，捕捉日内波动</div>
     </div>
-    <div class="card">
-      <div class="label">15:00 - 15:30</div>
-      <div style="font-weight:700;margin-bottom:0.3rem;">收盘价值平均</div>
-      <div class="muted">
-        <code>python3 daily_value_average.py</code><br>输入收盘价，计算是否需要调整
-      </div>
-    </div>
-    <div class="card">
-      <div class="label">15:30 - 15:40</div>
-      <div style="font-weight:700;margin-bottom:0.3rem;">提交调整单</div>
-      <div class="muted">根据脚本建议，在尾盘或次日开盘提交买卖委托</div>
-    </div>
   </div>
+  <p style="font-size:0.85rem;color:var(--muted);margin-top:0.5rem;">
+    * 原本的收盘后价值平均流程改为10:00盘中触发，每天只计算一次。<br>
+    * 10:00后如有大幅波动（>阈值），可在14:30-15:00手动补查。
+  </p>
 
   <footer>
     <p>本报告仅为策略参考，不构成投资建议。实际交易请根据市场情况判断。</p>
