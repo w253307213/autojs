@@ -1,106 +1,165 @@
 #!/usr/bin/env python3
 """
-10:00 市值平衡计算器
-每天10:00触发，获取实时价格 → 计算价值平均调整 → 输出买卖指令
-统一基准：每个标的持仓市值1万元，组合总目标5万元
+10:00 自适应网格 — 动态间距版
+每天10:00触发，流程：
+  1. 获取每个标的最近60天的日线数据
+  2. 从日线数据中重新计算日波动率
+  3. 基于最新波动率动态计算最优阈值（网格间距）
+  4. 用动态阈值判断是否需要市值平衡调整
 """
 import json, os, re, sys
+import numpy as np
+from scipy import stats
 from datetime import datetime
 from subprocess import run
 
 MX_APIKEY = os.environ.get("MX_APIKEY", "mkt_k4G_Tse8OFGLi6WKBlOofot9VWIr3E4uG7FMtlf3QY0")
 MX_DATA_DIR = os.path.expanduser("/root/.openclaw/workspace/skills/mx-data")
 
+# 目标概率：每天触发概率 ~50%（即周触发2.5次）
+TARGET_DAILY_PROB = 0.5
+Z_SCORE = stats.norm.ppf(1 - TARGET_DAILY_PROB / 2)  # ≈ 0.6745
+
 PORTFOLIO = {
-    "003019": {"name": "宸展光电",       "target": 10000, "threshold": 2.9, "holdings": 300,  "min": 100, "sse": "SZ"},
-    "513300": {"name": "纳斯达克100ETF", "target": 10000, "threshold": 1.3, "holdings": 3600, "min": 100, "sse": "SH"},
-    "161005": {"name": "富国天惠LOF",    "target": 10000, "threshold": 0.7, "holdings": 3100, "min": 100, "sse": "SZ"},
-    "159566": {"name": "新能源电池ETF",  "target": 10000, "threshold": 1.5, "holdings": 4300, "min": 100, "sse": "SZ"},
-    "159851": {"name": "金融科技ETF",    "target": 10000, "threshold": 1.3, "holdings": 15600,"min": 100, "sse": "SZ"},
+    "003019": {"name": "宸展光电",       "target": 10000, "holdings": 300,  "min": 100, "sse": "SZ"},
+    "513300": {"name": "纳斯达克100ETF", "target": 10000, "holdings": 3600, "min": 100, "sse": "SH"},
+    "161005": {"name": "富国天惠LOF",    "target": 10000, "holdings": 3100, "min": 100, "sse": "SZ"},
+    "159566": {"name": "新能源电池ETF",  "target": 10000, "holdings": 4300, "min": 100, "sse": "SZ"},
+    "159851": {"name": "金融科技ETF",    "target": 10000, "holdings": 15600,"min": 100, "sse": "SZ"},
 }
 
-def fetch_latest_close(code):
-    """从mx-data获取最新收盘价（优先解析stdout，其次读取JSON文件）"""
-    try:
-        env = os.environ.copy()
-        env["MX_APIKEY"] = MX_APIKEY
-        r = run(["python3", "mx_data.py", f"{code} 最新行情"],
+# ========== 数据获取 ==========
+
+def fetch_ohlc_data(code):
+    """获取近60天的日线OHLC数据
+    查询格式：先用"近两个月每日开盘价_收盘价_最高价_最低价_成交量"获取完整数据
+    兜底：用"日线60"获取（通常仅4天）
+    返回 (closes, opens, highs, lows)
+    """
+    query_queries = [
+        f"{code} 近两个月每日开盘价 收盘价 最高价 最低价 成交量",
+        f"{code} 日线 60",
+    ]
+
+    out_dir = os.path.expanduser("/root/.openclaw/workspace/mx_data/output")
+
+    for query in query_queries:
+        try:
+            env = os.environ.copy()
+            env["MX_APIKEY"] = MX_APIKEY
+            run(["python3", "mx_data.py", query],
                 cwd=MX_DATA_DIR, capture_output=True, text=True, timeout=60, env=env)
-        output = r.stdout + r.stderr
+        except:
+            pass
 
-        # 从stdout直接解析价格（在表格行中找数值）
-        # Pattern: 收盘价列中的数字
-        prices_found = re.findall(r'(\d+\.\d+)(?:元)?', output)
-        if prices_found:
-            # 取最后一个表格中的价格（最新行情表的收盘价）
-            nums = [float(x) for x in prices_found if 0.1 < float(x) < 1000]
-            if nums:
-                return nums[0]
-
-        # 兜底：从最新生成的JSON文件读取
-        out_dir = os.path.expanduser("/root/.openclaw/workspace/mx_data/output")
+        # 从JSON文件提取
         json_files = [f for f in os.listdir(out_dir)
-                      if code in f and "最新行情" in f and f.endswith("_raw.json")]
+                      if code in f and ("近两个月" in f or "日线" in f) and f.endswith("_raw.json")]
         json_files.sort(key=lambda x: os.path.getmtime(os.path.join(out_dir, x)), reverse=True)
-        for jf in json_files[:1]:
-            with open(os.path.join(out_dir, jf)) as f:
-                data = json.load(f)
-            tables = data.get('data',{}).get('data',{}).get('searchDataResultDTO',{}).get('dataTableDTOList',[])
-            for tbl in tables:
-                raw = tbl.get('rawTable', {})
-                for key in ['325898', '最新价', '收盘价']:
-                    vals = raw.get(key, [])
-                    if vals:
-                        return float(str(vals[0]).replace('元','').strip())
-        return None
-    except:
-        return None
+
+        for jf in json_files[:2]:
+            try:
+                with open(os.path.join(out_dir, jf)) as f:
+                    data = json.load(f)
+
+                tables = data.get('data', {}).get('data', {}).get('searchDataResultDTO', {}).get('dataTableDTOList', [])
+
+                for tbl in tables:
+                    raw = tbl.get('rawTable', {})
+                    closes_raw = raw.get('325898', [])
+                    if not closes_raw or len(closes_raw) < 5:
+                        continue
+
+                    closes = []
+                    opens = []
+                    highs = []
+                    lows = []
+                    for v in closes_raw:
+                        try:
+                            closes.append(float(str(v).replace('元', '').strip()))
+                        except:
+                            pass
+
+                    for v in raw.get('326269', []):
+                        try:
+                            opens.append(float(str(v).replace('元', '').strip()))
+                        except:
+                            pass
+
+                    for v in raw.get('326339', []):
+                        try:
+                            highs.append(float(str(v).replace('元', '').strip()))
+                        except:
+                            pass
+
+                    for v in raw.get('326386', []):
+                        try:
+                            lows.append(float(str(v).replace('元', '').strip()))
+                        except:
+                            pass
+
+                    if len(closes) >= 5:
+                        return closes, opens, highs, lows
+            except:
+                continue
+
+    return None
 
 
-# 已知最新价格（自动获取失败时的兜底值）
-FALLBACK_PRICES = {
-    "003019": 32.95,
-    "513300": 2.752,
-    "161005": 3.184,
-    "159566": 2.292,
-    "159851": 0.638,
-}
+# ========== 波动率计算 ==========
 
-def get_prices():
-    """获取所有标的价格（全自动，无交互）"""
-    prices = {}
-    print(f"\n  {'─'*56}")
-    print(f"  正在获取各标的最新价格...")
-    print(f"  {'─'*56}")
+def calc_volatility(closes, opens, highs, lows):
+    """从日线数据计算日波动率和日内振幅"""
+    # 日收益率波动率
+    rets = [(closes[i] - closes[i+1]) / closes[i+1] * 100 for i in range(len(closes)-1)]
+    daily_vol = float(np.std(rets, ddof=1))
 
-    for code, info in PORTFOLIO.items():
-        p = fetch_latest_close(code)
-        if p:
-            print(f"  {code} {info['name']}: {p:.3f} 元 (实时)")
-            prices[code] = p
-        else:
-            fb = FALLBACK_PRICES.get(code)
-            print(f"  {code} {info['name']}: 使用参考价 {fb:.3f} 元 (非实时)")
-            if fb:
-                prices[code] = fb
-    return prices
+    # 日内振幅
+    n = min(len(highs), len(lows), len(closes))
+    if n >= 3:
+        intra_ranges = [(highs[i] - lows[i]) / closes[i] * 100 for i in range(n)]
+        avg_intra = float(np.mean(intra_ranges))
+    else:
+        avg_intra = float(np.mean([abs(c - o) / o * 100 for c, o in zip(closes, opens)]))
+
+    return daily_vol, avg_intra
 
 
-def calc(code, info, price):
-    """计算单个标的是否需要市值平衡"""
+def calc_optimal_threshold(daily_vol, avg_intra):
+    """
+    基于最新波动率动态计算最优阈值
+    - 目标：每天50%概率触发一次（周2.5次）
+    - 公式：threshold = Z * daily_vol,  Z ≈ 0.6745
+    - 下限保护：不低于日内振幅的40%（防止噪音触发）
+    """
+    threshold = round(Z_SCORE * daily_vol, 1)
+    min_threshold = max(round(avg_intra * 0.4, 1), 0.5)
+    if threshold < min_threshold:
+        threshold = min_threshold
+
+    # 预期触发率
+    z_actual = threshold / daily_vol if daily_vol > 0 else 3
+    p_daily = 2 * (1 - stats.norm.cdf(z_actual))
+    p_weekly = p_daily * 5
+
+    return threshold, p_daily, p_weekly
+
+
+# ========== 市值平衡计算 ==========
+
+def calc_adjustment(code, info, price, threshold):
+    """用动态阈值计算是否需要调整"""
     val = info["holdings"] * price
     target = info["target"]
-    thr = info["threshold"]
     dev_pct = (val - target) / target * 100
-
-    upper = target * (1 + thr / 100)
-    lower = target * (1 - thr / 100)
+    upper = target * (1 + threshold / 100)
+    lower = target * (1 - threshold / 100)
 
     result = {
         "code": code, "name": info["name"], "price": price,
         "holdings": info["holdings"], "value": round(val, 2),
         "target": target, "dev_pct": round(dev_pct, 2),
-        "threshold": thr, "upper": round(upper), "lower": round(lower),
+        "threshold": threshold, "upper": round(upper), "lower": round(lower),
         "trigger": False, "action": "持有", "shares": 0, "dir": "",
     }
 
@@ -121,56 +180,60 @@ def calc(code, info, price):
     return result
 
 
-def run(prices):
-    """主计算流程"""
+# ========== 报告生成 ==========
+
+def build_report(all_data):
+    """生成完整报告"""
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     lines = []
     lines.append(f"{'='*64}")
-    lines.append(f"  10:00 市值平衡报告")
+    lines.append(f"  10:00 自适应网格报告（动态间距）")
     lines.append(f"  时间: {now}")
-    lines.append(f"  基准: 每个标的 10,000 元 | 组合总目标: 50,000 元")
+    lines.append(f"  备注: 阈值基于最新{all_data[0]['n_days']}天数据动态计算")
     lines.append(f"{'='*64}")
 
-    results = []
     total_buy = 0.0
     total_sell = 0.0
     triggers = 0
 
-    for code, info in PORTFOLIO.items():
-        if code not in prices:
-            lines.append(f"\n  {code}: 无价格数据，跳过")
-            continue
-        r = calc(code, info, prices[code])
-        results.append(r)
-
-        tag = "⚡ 需调整" if r["trigger"] else "✓ 持有"
+    for d in all_data:
+        code = d["code"]
         lines.append(f"\n  {'─'*56}")
-        lines.append(f"  {code} {r['name']:<12} {tag}")
-        lines.append(f"  价格: {r['price']:.3f} | 持仓: {r['holdings']:,}股 | 市值: {r['value']:,.0f}元")
-        lines.append(f"  目标: {r['target']:,}元 | 偏离: {r['dev_pct']:+.2f}%")
-        lines.append(f"  阈值: ±{r['threshold']:.1f}% ({r['lower']:,}~{r['upper']:,}元)")
+        lines.append(f"  {code} {d['name']:<12} 当前: {d['price']:.3f}元 | 日波动: {d['daily_vol']:.2f}%")
 
-        if r["trigger"]:
+        if d["error"]:
+            lines.append(f"  获取数据失败，跳过")
+            continue
+
+        # 动态阈值信息
+        tag = "⚡ 需调整" if d["trigger"] else "✓ 持有"
+        lines.append(f"  持仓: {d['holdings']:,}股 | 市值: {d['value']:,.0f}元 | 目标: {d['target']:,}元")
+        lines.append(f"  偏离: {d['dev_pct']:+.2f}% | 动态阈值: ±{d['threshold']:.1f}% (日波动{d['daily_vol']:.2f}% × {Z_SCORE:.3f})")
+        lines.append(f"  区间: {d['lower']:,} ~ {d['upper']:,}元 | {tag}")
+
+        if d["trigger"]:
             triggers += 1
-            d = "买入" if r["dir"] == "BUY" else "卖出"
-            lines.append(f"  ⚡ 操作: {d} {r['shares']:,}股 @ {r['price']:.3f} = {r['amount']:,.0f}元")
-            lines.append(f"     操作后: {r['new_holdings']:,}股 (市值 {r['new_holdings']*r['price']:,.0f}元)")
-            lines.append(f"     华宝委托: {d} {code} {r['shares']}股")
-            if r["dir"] == "SELL":
-                total_sell += r["amount"]
+            dr = "买入" if d["dir"] == "BUY" else "卖出"
+            lines.append(f"  ⚡ 操作: {dr} {d['shares']:,}股 @ {d['price']:.3f} = {d['amount']:,.0f}元")
+            lines.append(f"     新持仓: {d['new_holdings']:,}股 (市值 {d['new_holdings']*d['price']:,.0f}元)")
+            lines.append(f"     华宝委托: {dr} {code} {d['shares']}股")
+            if d["dir"] == "SELL":
+                total_sell += d["amount"]
             else:
-                total_buy += r["amount"]
+                total_buy += d["amount"]
         else:
-            lines.append(f"  操作: 无需调整 (市值在目标区间内)")
+            lines.append(f"  操作: 无需调整")
 
     lines.append(f"\n  {'='*64}")
     lines.append(f"  今日汇总")
-    lines.append(f"  触发调整: {triggers} / {len(PORTFOLIO)} 个标的")
+    lines.append(f"  触发调整: {triggers} / {len(all_data)} 个标的")
     if total_buy or total_sell:
         lines.append(f"  总买入: {total_buy:,.0f}元 | 总卖出: {total_sell:,.0f}元")
         net = total_sell - total_buy
         lines.append(f"  资金净流: {'+' if net >= 0 else ''}{net:+,.0f}元")
-    lines.append(f"  组合市值: {sum(prices.get(c,0)*info['holdings'] for c,info in PORTFOLIO.items()):,.0f}元 / 目标50,000元")
+    total_val = sum(PORTFOLIO[d["code"]]["holdings"] * d["price"]
+                    for d in all_data if not d["error"])
+    lines.append(f"  组合市值: {total_val:,.0f}元 / 目标50,000元")
     lines.append(f"{'='*64}")
 
     return "\n".join(lines)
@@ -187,20 +250,59 @@ def save_report(report):
     print(f"\n  报告已保存: {path}")
 
 
+# ========== 主流程 ==========
+
 if __name__ == "__main__":
     print()
     print(f"  {'='*56}")
-    print(f"  10:00 市值平衡计算器")
-    print(f"  日期: {datetime.now().strftime('%Y-%m-%d')}")
-    print(f"  时间: {datetime.now().strftime('%H:%M')}")
+    print(f"  10:00 自适应网格 — 动态间距版")
+    print(f"  日期: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"  方法: 获取60天日线 → 算波动率 → 动态阈值 → 平衡判断")
     print(f"  组合: 5个标的 × 1万元 = 5万元")
     print(f"  {'='*56}")
 
-    prices = get_prices()
-    if not prices:
-        print("\n  没有价格数据，退出")
-        sys.exit(1)
+    all_data = []
 
-    report = run(prices)
+    for code, info in PORTFOLIO.items():
+        print(f"\n  {'─'*56}")
+        print(f"  [{code} {info['name']}] 获取日线数据...")
+
+        ohlc = fetch_ohlc_data(code)
+        if ohlc is None:
+            print(f"  ✗ 获取失败")
+            all_data.append({
+                "code": code, "name": info["name"], "error": True,
+                "price": 0, "holdings": info["holdings"],
+                "value": 0, "target": info["target"],
+                "daily_vol": 0, "threshold": 0,
+                "dev_pct": 0, "trigger": False,
+            })
+            continue
+
+        closes, opens, highs, lows = ohlc
+        latest_price = closes[0]
+        n_days = len(closes)
+
+        # 动态计算波动率
+        daily_vol, avg_intra = calc_volatility(closes, opens, highs, lows)
+
+        # 动态计算最优阈值
+        threshold, p_daily, p_weekly = calc_optimal_threshold(daily_vol, avg_intra)
+
+        print(f"  最新价: {latest_price:.3f} | 数据天数: {n_days}")
+        print(f"  日波动率: {daily_vol:.2f}% | 日内振幅: {avg_intra:.2f}%")
+        print(f"  动态阈值: ±{threshold:.1f}% (预期触发 {p_daily*100:.0f}%/天, {p_weekly:.1f}次/周)")
+
+        # 用动态阈值做平衡判断
+        r = calc_adjustment(code, info, latest_price, threshold)
+        r["daily_vol"] = round(daily_vol, 2)
+        r["avg_intra"] = round(avg_intra, 2)
+        r["n_days"] = n_days
+        r["error"] = False
+        r["expected_daily_pct"] = round(p_daily * 100)
+        r["expected_weekly"] = round(p_weekly, 1)
+        all_data.append(r)
+
+    report = build_report(all_data)
     print("\n" + report)
     save_report(report)
